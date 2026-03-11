@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineVault — My Movie Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #e8b86d;
+    --accent2: #c97b4b;
+    --text: #e8e8f0;
+    --text-muted: #7a7a9a;
+    --text-dim: #4a4a6a;
+    --red: #e05c5c;
+    --green: #5ce08a;
+    --star: #f0c040;
+    --tab-active: #e8b86d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(ellipse at 20% 0%, rgba(232,184,109,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(201,123,75,0.04) 0%, transparent 50%);
+  }
+
+  /* ── LOGIN OVERLAY ── */
+  #login-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10,10,15,0.97);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 360px;
+    text-align: center;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+  .login-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+  }
+  .login-tagline {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+  .login-box input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .login-box input:focus { border-color: var(--accent); }
+  .login-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 8px;
+    padding: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 4px;
+  }
+  .login-btn:hover { background: var(--accent2); }
+  .login-btn:active { transform: scale(0.98); }
+  .login-guest {
+    margin-top: 16px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+  }
+  .login-guest:hover { color: var(--text); }
+  .login-error {
+    color: var(--red);
+    font-size: 0.78rem;
+    margin-top: 8px;
+    min-height: 18px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 28px 40px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+  .logo span {
+    color: var(--text-muted);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.1rem;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .user-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+  }
+  .user-badge.admin { color: var(--accent); border-color: rgba(232,184,109,0.3); }
+  #logout-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #logout-btn:hover { border-color: var(--accent); color: var(--accent); }
+  #stats-bar {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  #stats-bar span { color: var(--accent); }
+
+  /* ── TABS ── */
+  .tabs-nav {
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-top: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs-nav::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 14px 20px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    position: relative;
+    top: 1px;
+  }
+  .tab-btn:hover { color: var(--text-muted); }
+  .tab-btn.active {
+    color: var(--tab-active);
+    border-bottom-color: var(--tab-active);
+  }
+  .tab-btn .tab-count {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 2px 7px;
+    font-size: 0.65rem;
+    margin-left: 6px;
+    color: var(--text-muted);
+  }
+  .tab-btn.active .tab-count { background: rgba(232,184,109,0.15); color: var(--accent); }
+  #add-tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 10px 14px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-left: 4px;
+  }
+  #add-tab-btn:hover { color: var(--accent); background: rgba(232,184,109,0.08); }
+
+  /* ── MAIN CONTENT ── */
+  main { padding: 24px 40px 60px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+  }
+  thead tr {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  th {
+    padding: 14px 16px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+  th:first-child { width: 40px; text-align: center; }
+  tbody tr {
+    border-bottom: 1px solid rgba(42,42,61,0.5);
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(232,184,109,0.03); }
+  td {
+    padding: 11px 16px;
+    font-size: 0.85rem;
+    vertical-align: middle;
+  }
+  td:first-child {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  /* ── INPUTS IN TABLE ── */
+  .cell-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    width: 100%;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .cell-input:focus {
+    background: rgba(232,184,109,0.07);
+    outline: 1px solid rgba(232,184,109,0.3);
+  }
+  .cell-input[readonly] {
+    cursor: default;
+    color: var(--text);
+  }
+  .cell-input[readonly]:focus { background: transparent; outline: none; }
+  .cell-input::placeholder { color: var(--text-dim); }
+  .cell-input.autofilled { color: var(--accent); }
+
+  /* title input wider */
+  .col-title { min-width: 200px; }
+  .col-year { width: 80px; }
+  .col-genre { width: 160px; }
+  .col-rating { width: 120px; }
+  .col-actions { width: 50px; text-align: center; }
+
+  /* ── STAR RATING ── */
+  .stars {
+    display: flex;
+    gap: 2px;
+    cursor: pointer;
+  }
+  .stars.readonly { cursor: default; }
+  .star {
+    font-size: 1rem;
+    color: var(--text-dim);
+    transition: color 0.1s, transform 0.1s;
+    line-height: 1;
+  }
+  .star.lit { color: var(--star); }
+  .stars:not(.readonly) .star:hover,
+  .stars:not(.readonly) .star.hov { color: var(--star); transform: scale(1.15); }
+
+  /* ── DELETE BTN ── */
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .del-btn:hover { color: var(--red); background: rgba(224,92,92,0.1); }
+
+  /* ── ADD ROW ── */
+  .add-row-btn {
+    margin-top: 14px;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    padding: 10px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+  }
+  .add-row-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(232,184,109,0.04); }
+
+  /* ── AUTOCOMPLETE DROPDOWN ── */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #1e1e2d;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .autocomplete-dropdown:empty { display: none; }
+  .ac-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-bottom: 1px solid rgba(42,42,61,0.4);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover { background: rgba(232,184,109,0.08); }
+  .ac-title { font-size: 0.84rem; color: var(--text); }
+  .ac-meta { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+  .ac-loading {
+    padding: 12px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── GENRE BADGE ── */
+  .genre-input-wrap { position: relative; }
+
+  /* ── READONLY MODE ── */
+  body.guest-mode .add-row-btn,
+  body.guest-mode #add-tab-btn,
+  body.guest-mode .del-btn { display: none !important; }
+  body.guest-mode .cell-input { pointer-events: none; }
+  body.guest-mode .stars { pointer-events: none; cursor: default; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 32px; right: 32px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 500;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-hint {
+    text-align: center;
+    padding: 40px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── RENAME TAB ── */
+  .tab-rename-input {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    outline: none;
+    width: 120px;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">CineVault</div>
+    <div class="login-tagline">My Movie Collection</div>
+    <input type="text" id="login-user" placeholder="Username" autocomplete="off" />
+    <input type="password" id="login-pass" placeholder="Password" autocomplete="off" />
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-err"></div>
+    <div class="login-guest" onclick="guestMode()">Continue as viewer (read-only)</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <div class="logo">CineVault <span>— My Collection</span></div>
+  </div>
+  <div class="header-right">
+    <div id="stats-bar">— movies</div>
+    <div class="user-badge" id="user-badge">GUEST</div>
+    <button id="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+</header>
+
+<!-- TABS NAV -->
+<div class="tabs-nav" id="tabs-nav"></div>
+
+<!-- MAIN -->
+<main id="main-content"></main>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG — change these credentials!
+// ══════════════════════════════════════════
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = 'cinevault2024';
+const STORAGE_KEY = 'cinevault_data_v2';
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let isAdmin = false;
+let activeTab = 0;
+let tabs = [];       // [{name, movies:[{title,year,genre,rating}]}]
+let acTimers = {};
+let currentAcRow = null;
+
+// ══════════════════════════════════════════
+//  PERSISTENCE
+// ══════════════════════════════════════════
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ tabs }));
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      tabs = parsed.tabs || [];
+    }
+  } catch(e) { tabs = []; }
+  if (!tabs.length) {
+    tabs = [{ name: 'Tab 1', movies: [] }];
+    // Seed 50 empty slots
+    for (let i = 0; i < 50; i++) tabs[0].movies.push(emptyMovie());
+    saveData();
+  }
+}
+
+function emptyMovie() {
+  return { title: '', year: '', genre: '', rating: 0 };
+}
+
+// ══════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  if (u === ADMIN_USER && p === ADMIN_PASS) {
+    isAdmin = true;
+    document.getElementById('login-overlay').style.display = 'none';
+    document.body.classList.remove('guest-mode');
+    document.getElementById('user-badge').textContent = 'ADMIN';
+    document.getElementById('user-badge').className = 'user-badge admin';
+    toast('Welcome back, ' + u);
+    render();
+  } else {
+    document.getElementById('login-err').textContent = 'Invalid credentials.';
+  }
+}
+function guestMode() {
+  isAdmin = false;
+  document.getElementById('login-overlay').style.display = 'none';
+  document.body.classList.add('guest-mode');
+  document.getElementById('user-badge').textContent = 'VIEWER';
+  render();
+}
+function doLogout() {
+  isAdmin = false;
+  document.body.classList.add('guest-mode');
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('user-badge').textContent = 'GUEST';
+  document.getElementById('user-badge').className = 'user-badge';
+}
+// Enter key on login
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('login-user').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-pass').focus();
+});
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════
+function updateStats() {
+  let total = 0;
+  tabs.forEach(t => t.movies.forEach(m => { if (m.title.trim()) total++; }));
+  document.getElementById('stats-bar').innerHTML = `<span>${total}</span> movies tracked`;
+}
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+function render() {
+  renderTabsNav();
+  renderTabPanel();
+  updateStats();
+}
+
+function renderTabsNav() {
+  const nav = document.getElementById('tabs-nav');
+  nav.innerHTML = '';
+  tabs.forEach((tab, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === activeTab ? ' active' : '');
+    const filled = tab.movies.filter(m => m.title.trim()).length;
+    btn.innerHTML = `<span class="tab-label">${escHtml(tab.name)}</span><span class="tab-count">${filled}</span>`;
+    btn.onclick = (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      switchTab(i);
+    };
+    // Double-click to rename (admin only)
+    if (isAdmin) {
+      btn.ondblclick = (e) => { e.stopPropagation(); startRenameTab(i, btn); };
+    }
+    nav.appendChild(btn);
+  });
+  if (isAdmin) {
+    const addBtn = document.createElement('button');
+    addBtn.id = 'add-tab-btn';
+    addBtn.title = 'Add new tab';
+    addBtn.textContent = '+';
+    addBtn.onclick = addTab;
+    nav.appendChild(addBtn);
+  }
+}
+
+function startRenameTab(i, btn) {
+  const label = btn.querySelector('.tab-label');
+  const inp = document.createElement('input');
+  inp.className = 'tab-rename-input';
+  inp.value = tabs[i].name;
+  inp.onclick = e => e.stopPropagation();
+  inp.ondblclick = e => e.stopPropagation();
+  label.replaceWith(inp);
+  inp.focus(); inp.select();
+  const finish = () => {
+    const val = inp.value.trim() || tabs[i].name;
+    tabs[i].name = val;
+    saveData();
+    renderTabsNav();
+  };
+  inp.onblur = finish;
+  inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') { inp.value = tabs[i].name; inp.blur(); } };
+}
+
+function switchTab(i) {
+  activeTab = i;
+  renderTabsNav();
+  renderTabPanel();
+}
+
+function addTab() {
+  const newTab = { name: `Tab ${tabs.length + 1}`, movies: [] };
+  for (let i = 0; i < 50; i++) newTab.movies.push(emptyMovie());
+  tabs.push(newTab);
+  activeTab = tabs.length - 1;
+  saveData();
+  render();
+  toast('New tab added');
+}
+
+function renderTabPanel() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = '';
+  const tab = tabs[activeTab];
+  const panel = document.createElement('div');
+  panel.className = 'tab-panel active';
+
+  const tableWrap = document.createElement('div');
+  tableWrap.className = 'table-wrap';
+
+  const table = document.createElement('table');
+  table.innerHTML = `<thead><tr>
+    <th>#</th>
+    <th>Title</th>
+    <th>Year</th>
+    <th>Genre</th>
+    <th>Rating</th>
+    ${isAdmin ? '<th></th>' : ''}
+  </tr></thead>`;
+
+  const tbody = document.createElement('tbody');
+  tab.movies.forEach((movie, idx) => {
+    tbody.appendChild(createRow(movie, idx));
+  });
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  panel.appendChild(tableWrap);
+
+  if (isAdmin) {
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-row-btn';
+    addBtn.innerHTML = `<span>+</span> Add Movie Slot`;
+    addBtn.onclick = () => {
+      if (tab.movies.length >= 500) { toast('Max 500 slots per tab'); return; }
+      tab.movies.push(emptyMovie());
+      saveData();
+      const newIdx = tab.movies.length - 1;
+      const tr = createRow(tab.movies[newIdx], newIdx);
+      tbody.appendChild(tr);
+      updateStats();
+      renderTabsNav();
+      tr.querySelector('.title-input')?.focus();
+      toast('Slot added');
+    };
+    panel.appendChild(addBtn);
+  }
+
+  main.appendChild(panel);
+}
+
+function createRow(movie, idx) {
+  const tr = document.createElement('tr');
+  const ro = !isAdmin ? ' readonly' : '';
+
+  tr.innerHTML = `
+    <td>${idx + 1}</td>
+    <td class="col-title autocomplete-wrap">
+      <input class="cell-input title-input${movie.title ? '' : ''}" 
+             value="${escHtml(movie.title)}" 
+             placeholder="Movie title…"
+             ${ro}
+             autocomplete="off"
+             data-idx="${idx}" />
+      <div class="autocomplete-dropdown" id="ac-${activeTab}-${idx}"></div>
+    </td>
+    <td class="col-year">
+      <input class="cell-input year-input${movie.year ? ' autofilled' : ''}" 
+             value="${escHtml(movie.year)}" 
+             placeholder="Year"
+             ${ro}
+             data-idx="${idx}" />
+    </td>
+    <td class="col-genre">
+      <input class="cell-input genre-input${movie.genre ? ' autofilled' : ''}" 
+             value="${escHtml(movie.genre)}" 
+             placeholder="Genre"
+             ${ro}
+             data-idx="${idx}" />
+    </td>
+    <td class="col-rating">
+      <div class="stars${!isAdmin ? ' readonly' : ''}" id="stars-${activeTab}-${idx}" data-rating="${movie.rating || 0}" data-idx="${idx}">
+        ${buildStars(movie.rating || 0)}
+      </div>
+    </td>
+    ${isAdmin ? `<td class="col-actions"><button class="del-btn" data-idx="${idx}" title="Clear row">✕</button></td>` : ''}
+  `;
+
+  if (isAdmin) {
+    const titleInput = tr.querySelector('.title-input');
+    const yearInput = tr.querySelector('.year-input');
+    const genreInput = tr.querySelector('.genre-input');
+    const acDrop = tr.querySelector(`#ac-${activeTab}-${idx}`);
+    const delBtn = tr.querySelector('.del-btn');
+
+    titleInput.addEventListener('input', (e) => {
+      const val = e.target.value;
+      tabs[activeTab].movies[idx].title = val;
+      saveData(); updateStats(); renderTabsNav();
+      if (val.length >= 2) {
+        clearTimeout(acTimers[idx]);
+        acTimers[idx] = setTimeout(() => fetchMovieSuggestions(val, idx, acDrop, yearInput, genreInput), 400);
+      } else { acDrop.innerHTML = ''; }
+    });
+
+    titleInput.addEventListener('blur', () => {
+      setTimeout(() => { acDrop.innerHTML = ''; }, 200);
+    });
+
+    yearInput.addEventListener('input', (e) => {
+      tabs[activeTab].movies[idx].year = e.target.value;
+      e.target.classList.remove('autofilled');
+      saveData();
+    });
+    genreInput.addEventListener('input', (e) => {
+      tabs[activeTab].movies[idx].genre = e.target.value;
+      e.target.classList.remove('autofilled');
+      saveData();
+    });
+
+    // Stars
+    const starsEl = tr.querySelector(`#stars-${activeTab}-${idx}`);
+    starsEl.querySelectorAll('.star').forEach((star, si) => {
+      star.addEventListener('mouseenter', () => {
+        starsEl.querySelectorAll('.star').forEach((s, j) => {
+          s.classList.toggle('hov', j <= si);
+        });
+      });
+      star.addEventListener('mouseleave', () => {
+        starsEl.querySelectorAll('.star').forEach(s => s.classList.remove('hov'));
+      });
+      star.addEventListener('click', () => {
+        const newRating = si + 1;
+        const current = tabs[activeTab].movies[idx].rating;
+        tabs[activeTab].movies[idx].rating = (current === newRating) ? 0 : newRating;
+        saveData();
+        starsEl.innerHTML = buildStars(tabs[activeTab].movies[idx].rating);
+        rebindStars(starsEl, idx);
+      });
+    });
+
+    delBtn.addEventListener('click', () => {
+      tabs[activeTab].movies[idx] = emptyMovie();
+      saveData();
+      // Re-render row
+      const newTr = createRow(tabs[activeTab].movies[idx], idx);
+      tr.replaceWith(newTr);
+      updateStats(); renderTabsNav();
+      toast('Row cleared');
+    });
+  }
+
+  return tr;
+}
+
+function rebindStars(starsEl, idx) {
+  starsEl.querySelectorAll('.star').forEach((star, si) => {
+    star.addEventListener('mouseenter', () => {
+      starsEl.querySelectorAll('.star').forEach((s, j) => s.classList.toggle('hov', j <= si));
+    });
+    star.addEventListener('mouseleave', () => {
+      starsEl.querySelectorAll('.star').forEach(s => s.classList.remove('hov'));
+    });
+    star.addEventListener('click', () => {
+      const newRating = si + 1;
+      const current = tabs[activeTab].movies[idx].rating;
+      tabs[activeTab].movies[idx].rating = (current === newRating) ? 0 : newRating;
+      saveData();
+      starsEl.innerHTML = buildStars(tabs[activeTab].movies[idx].rating);
+      rebindStars(starsEl, idx);
+    });
+  });
+}
+
+function buildStars(rating) {
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    html += `<span class="star${i <= rating ? ' lit' : ''}">★</span>`;
+  }
+  return html;
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════
+//  MOVIE AUTOFILL
+//  1) Wikipedia opensearch for dropdown suggestions
+//  2) On select: try Wikipedia wikitext for year+genre
+//  3) If Wikipedia missing genre/year → fall back to OMDb (IMDB data)
+// ══════════════════════════════════════════
+
+// Free OMDb API key (public demo key, rate-limited but works for personal use)
+const OMDB_KEY = 'trilogy';  // fallback public key
+
+async function fetchMovieSuggestions(query, idx, dropdown, yearInput, genreInput) {
+  if (!query || query.length < 2) { dropdown.innerHTML = ''; return; }
+  dropdown.innerHTML = `<div class="ac-loading">Searching…</div>`;
+  try {
+    // Step 1: Wikipedia opensearch for autocomplete list
+    const wikiSearch = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query + ' film')}&limit=6&namespace=0&format=json&origin=*`
+    );
+    const wikiData = await wikiSearch.json();
+    const titles = wikiData[1] || [];
+    const descriptions = wikiData[2] || [];
+
+    if (!titles.length) {
+      // If Wikipedia finds nothing, try OMDb search directly
+      const omdbResults = await fetchOmdbSearch(query);
+      if (!omdbResults.length) {
+        dropdown.innerHTML = `<div class="ac-loading">No results found</div>`;
+        setTimeout(() => { dropdown.innerHTML = ''; }, 1500);
+        return;
+      }
+      dropdown.innerHTML = '';
+      omdbResults.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'ac-item';
+        el.innerHTML = `<span class="ac-title">${escHtml(item.title)}</span><span class="ac-meta">${item.year || ''}</span>`;
+        el.addEventListener('mousedown', async (e) => {
+          e.preventDefault();
+          applyMovieDetails(idx, item.title, item.year, item.genre, dropdown, yearInput, genreInput);
+        });
+        dropdown.appendChild(el);
+      });
+      return;
+    }
+
+    dropdown.innerHTML = '';
+    titles.slice(0, 6).forEach((title, i) => {
+      const item = document.createElement('div');
+      item.className = 'ac-item';
+      const yearMatch = descriptions[i]?.match(/\b(19[0-9]{2}|20[0-2][0-9])\b/);
+      const yearStr = yearMatch ? yearMatch[0] : '';
+      const cleanTitle = title
+        .replace(/ \([\d]{4} film\)$/i, '')
+        .replace(/ \([^)]*film[^)]*\)$/i, '');
+      item.innerHTML = `<span class="ac-title">${escHtml(cleanTitle)}</span><span class="ac-meta">${yearStr}</span>`;
+      item.addEventListener('mousedown', async (e) => {
+        e.preventDefault();
+        dropdown.innerHTML = `<div class="ac-loading">Loading details…</div>`;
+
+        // Step 2: Try Wikipedia wikitext first
+        const wikiDetails = await fetchWikiDetails(title);
+        let year = wikiDetails.year || yearStr || '';
+        let genre = wikiDetails.genre || '';
+
+        // Step 3: If genre (or year) still missing, fall back to OMDb
+        if (!genre || !year) {
+          dropdown.innerHTML = `<div class="ac-loading">Checking IMDB…</div>`;
+          const omdb = await fetchOmdbByTitle(cleanTitle, year);
+          if (omdb) {
+            year  = year  || omdb.year  || '';
+            genre = genre || omdb.genre || '';
+          }
+        }
+
+        applyMovieDetails(idx, cleanTitle, year, genre, dropdown, yearInput, genreInput);
+      });
+      dropdown.appendChild(item);
+    });
+  } catch(e) {
+    dropdown.innerHTML = `<div class="ac-loading">Search unavailable</div>`;
+    setTimeout(() => { dropdown.innerHTML = ''; }, 1500);
+  }
+}
+
+function applyMovieDetails(idx, title, year, genre, dropdown, yearInput, genreInput) {
+  const tab = tabs[activeTab];
+  const movie = tab.movies[idx];
+  movie.title = title;
+  movie.year  = year  || movie.year;
+  movie.genre = genre || movie.genre;
+  saveData();
+  const titleInput = dropdown.closest('td').querySelector('.title-input');
+  if (titleInput) titleInput.value = title;
+  if (yearInput)  { yearInput.value  = movie.year;  yearInput.classList.toggle('autofilled',  !!movie.year); }
+  if (genreInput) { genreInput.value = movie.genre; genreInput.classList.toggle('autofilled', !!movie.genre); }
+  dropdown.innerHTML = '';
+  updateStats(); renderTabsNav();
+  toast(`"${title}" auto-filled`);
+}
+
+// ── Wikipedia wikitext parser ──
+async function fetchWikiDetails(pageTitle) {
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&prop=revisions&rvprop=content&rvslots=main&format=json&origin=*&formatversion=2`
+    );
+    const data = await res.json();
+    const pages = data.query?.pages || [];
+    if (!pages.length) return {};
+    const content = pages[0]?.revisions?.[0]?.slots?.main?.content || '';
+
+    // Extract year
+    let year = '';
+    const yearPatterns = [
+      /\|\s*release_date\s*=[^\n]*?(19[0-9]{2}|20[0-2][0-9])/i,
+      /\|\s*released\s*=[^\n]*?(19[0-9]{2}|20[0-2][0-9])/i,
+      /\|\s*year\s*=\s*(19[0-9]{2}|20[0-2][0-9])/i,
+    ];
+    for (const pat of yearPatterns) {
+      const m = content.match(pat);
+      if (m) { year = m[1]; break; }
+    }
+    if (!year) {
+      const m = content.match(/\b(19[3-9][0-9]|20[0-2][0-9])\b/);
+      if (m) year = m[1];
+    }
+
+    // Extract genre — brace-depth aware so | inside {{templates}} isn't mistaken for a field boundary
+    let genre = '';
+    const genreStartIdx = content.search(/\|\s*genre\s*=/i);
+    if (genreStartIdx !== -1) {
+      const afterEq = content.indexOf('=', genreStartIdx) + 1;
+      let depth = 0, ci = afterEq, fieldEnd = content.length;
+      while (ci < content.length) {
+        if (content[ci] === '{' && content[ci+1] === '{')   { depth++; ci += 2; continue; }
+        if (content[ci] === '}' && content[ci+1] === '}')   { depth--; ci += 2; continue; }
+        if (content[ci] === '\n' && depth === 0 && /[ \t]*\|/.test(content.slice(ci+1))) { fieldEnd = ci; break; }
+        ci++;
+      }
+      let raw = content.slice(afterEq, fieldEnd);
+
+      // Pull first value from {{Film genre|drama|romance|...}} before any stripping
+      const fgm = raw.match(/\{\{[Ff]ilm[\s_][Gg]enre\|([^}]+)\}\}/);
+      if (fgm) {
+        const first = fgm[1].split('|')[0].trim();
+        if (first) genre = first.charAt(0).toUpperCase() + first.slice(1);
+      }
+
+      if (!genre) {
+        // Expand list wrappers into newline-separated items
+        raw = raw.replace(/\{\{(?:plain\s*list|unbulleted\s*list|flat\s*list)\s*\|/gi, '\n');
+        // Strip all remaining {{ }} templates
+        raw = raw.replace(/\{\{[^}]*\}\}/g, '');
+        // Unwrap [[Target|Display]] → Display,  [[Target]] → Target
+        raw = raw.replace(/\[\[(?:[^\]|]*\|)?([^\]]+)\]\]/g, '$1');
+        raw = raw.replace(/\}\}/g, '');
+        raw = raw.replace(/<!--.*?-->/gs, '');
+        const parts = raw.split(/[\n|,/]/)
+          .map(s => s.replace(/^\s*[*#•]\s*/, '').trim())
+          .filter(s => s.length > 1 && s.length < 50 && !s.startsWith('{'));
+        if (parts.length > 0) genre = parts[0];
+      }
+    }
+
+    return { year, genre };
+  } catch(e) { return {}; }
+}
+
+// ── OMDb (IMDB data) fallback — fetch by exact title ──
+async function fetchOmdbByTitle(title, year) {
+  try {
+    const yearParam = year ? `&y=${year}` : '';
+    const url = `https://www.omdbapi.com/?t=${encodeURIComponent(title)}${yearParam}&type=movie&apikey=${OMDB_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.Response === 'True') {
+      return {
+        title: data.Title,
+        year:  data.Year ? data.Year.slice(0, 4) : '',
+        genre: data.Genre ? data.Genre.split(',')[0].trim() : ''
+      };
+    }
+    return null;
+  } catch(e) { return null; }
+}
+
+// ── OMDb search for autocomplete when Wikipedia finds nothing ──
+async function fetchOmdbSearch(query) {
+  try {
+    const url = `https://www.omdbapi.com/?s=${encodeURIComponent(query)}&type=movie&apikey=${OMDB_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.Response === 'True' && data.Search) {
+      return data.Search.slice(0, 6).map(m => ({
+        title: m.Title,
+        year:  m.Year ? m.Year.slice(0, 4) : '',
+        genre: ''  // OMDb search results don't include genre, fetched on select
+      }));
+    }
+    return [];
+  } catch(e) { return []; }
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+loadData();
+// Don't render until login
+</script>
+</body>
+</html>
