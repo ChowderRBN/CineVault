@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineVault — My Movie Collection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- LOGIN OVERLAY -->
+  <div id="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">CineVault</div>
+      <div class="login-tagline">My Movie Collection</div>
+      <input type="text"     id="login-user" placeholder="Username" autocomplete="off" />
+      <input type="password" id="login-pass" placeholder="Password" autocomplete="off" />
+      <button class="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="login-error" id="login-err"></div>
+      <div class="login-guest" onclick="guestMode()">Continue as viewer (read-only)</div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div>
+      <div class="logo">CineVault <span>— My Collection</span></div>
+    </div>
+    <div class="header-right">
+      <div id="stats-bar">— movies</div>
+      <div class="user-badge" id="user-badge">GUEST</div>
+      <button id="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- TABS NAV -->
+  <div class="tabs-nav" id="tabs-nav"></div>
+
+  <!-- MAIN CONTENT -->
+  <main id="main-content"></main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
