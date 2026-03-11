@@ -9,6 +9,14 @@
 </head>
 <body>
 
+  <!-- LOADING OVERLAY (shown while fetching Gist) -->
+  <div id="loading-overlay">
+    <div class="loading-inner">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading your collection…</div>
+    </div>
+  </div>
+
   <!-- LOGIN OVERLAY -->
   <div id="login-overlay">
     <div class="login-box">
@@ -28,6 +36,7 @@
       <div class="logo">CineVault <span>— My Collection</span></div>
     </div>
     <div class="header-right">
+      <div id="sync-indicator">✓ Saved to GitHub</div>
       <div id="stats-bar">— movies</div>
       <div class="user-badge" id="user-badge">GUEST</div>
       <button id="logout-btn" onclick="doLogout()">Sign Out</button>
@@ -43,6 +52,8 @@
   <!-- TOAST NOTIFICATION -->
   <div id="toast"></div>
 
+  <!-- config.js MUST load before app.js -->
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
