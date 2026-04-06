@@ -20,7 +20,7 @@ const CONFIG = {
   // 2. Click "Generate new token (classic)"
   // 3. Name it "CineVault" and check ONLY the "gist" scope
   // 4. Copy the token and paste below
-  GITHUB_TOKEN: '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',
+  GITHUB_TOKEN: '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',
 
   // ── STEP 3: Set your hashed password ──────────────────────────────────────
   // Your plain-text password is NEVER stored here — only a SHA-256 hash.
